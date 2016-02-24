@@ -1,0 +1,16 @@
+{
+  "title": "Fit To Width",
+  "name": "fittowidth",
+  "version": "0.1.0",
+  "description": "Fits text on most web pages to the width of your phone",
+  "main": "index.js",
+  "author": "Jarrad Whitaker",
+  "engines": {
+    "firefox": ">=38.0a1",
+    "fennec": ">=38.0a1"
+  },
+  "license": "GPLv3",
+  "keywords": [
+    "jetpack"
+  ]
+}

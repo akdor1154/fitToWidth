@@ -4,5 +4,6 @@ console.log('hello from index');
 
 pageMod.PageMod({
 	include: '*',
-	contentScriptFile: './fitToWidth.js'
+	contentScriptFile: './fitToWidth.js',
+	contentScriptWhen: 'start'
 });

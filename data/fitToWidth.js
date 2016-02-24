@@ -30,17 +30,20 @@ function setupClass(styleSheet) {
 function setWidth(widthInPx, classRule) {
   var widthValue = (widthInPx) ?  `${widthInPx}px` : 'auto';
   classRule.style.setProperty('max-width', widthValue, 'important');
+  //classRule.style.setProperty('background-color', 'red', 'important');
 }
 
 
 
 
 function isInline(node) {
-  var nodeStyle = window.getComputedStyle(node);
-  if (!nodeStyle) {
+  if (!node.nodeStyle) {
+    node.nodeStyle = window.getComputedStyle(node).display;
+  }
+  if (!node.nodeStyle) {
     return false;
   }
-  switch (nodeStyle.display) {
+  switch (node.nodeStyle) {
     case 'inline':
     case 'inline-block':
       return true;
@@ -51,11 +54,13 @@ function isInline(node) {
 
 
 function hasWidth(node) {
-  var nodeStyle = window.getComputedStyle(node);
-  if (!nodeStyle) {
+  if (!node.nodeStyle) {
+    node.nodeStyle = window.getComputedStyle(node).display;
+  }
+  if (!node.nodeStyle) {
     return false;
   }
-  switch (nodeStyle.display) {
+  switch (node.nodeStyle) {
     case 'inline-block':
     case 'block':
     case 'table-cell':
@@ -79,31 +84,96 @@ function resize(node) {
 }
 
 
-function walkChildren(node) {
-  if (shouldResize(node)) {
-    resize(node)
+function onNewNode(node) {
+  if (!(node instanceof Element)) {
+    return;
   }
-  for (var child of node.children) {
-    walkChildren(child);
+
+  if (node.tested) {
+    return;
+  }
+
+  node.tested = true;
+
+  if (isInline(node)) {
+    //do nothing
+  } else {
+    //console.log('stopping a '+node.nodeName+' from resizing');
+    if (node.parentNode) {
+      node.parentNode.classList.remove(resizeClassName);
+    }
+  }
+
+  if (hasWidth(node)) {
+    //console.log('setting a '+node.nodeName+' to resize');
+    node.classList.add(resizeClassName);
   }
 }
 
 
+function walkChildren(node) {
+  onNewNode(node);
+  if (!node.children) {
+    return;
+  }
+  Array.prototype.forEach.call(node.children, walkChildren);
+}
+
+function onMutation(mutations, observer) {
+  for (let mutation of mutations) {
+    for (let newNode of mutation.addedNodes) {
+      try {
+        if (!loaded) {
+          elements.push(newNode);
+        } else {
+          walkChildren(newNode);
+        }
+      } catch (e) {
+        console.error(e.message);
+        console.error(e.stack);
+      }
+    }
+  }
+}
+
+var loaded = false;
+var elements = Array(1000);
+
 function main() {
 
+  var observeOptions = {
+    'childList': true,
+    'subtree': true
+  };
+
+  var observer = new MutationObserver(onMutation);
+  observer.observe(document.documentElement, observeOptions)
+  
   setupStyle();
   var styleSheet = getStyleSheet();
   var classRule = setupClass(styleSheet);
 
-  walkChildren(document.body);
+  document.addEventListener('DOMContentLoaded', onLoad, false);
+  //walkChildren(document.body);
   //for each node
 
-  windowSizeChanged(classRule);
+  //windowSizeChanged(classRule);
 
   //window.addEventListener('resize', onResize.bind(undefined, classRule), false);
 
   window.setInterval(checkIfResized.bind(undefined, classRule), 250);
+  
+}
 
+function onLoad() {
+  loaded = true;
+  actuallyWalk(elements);
+}
+
+function actuallyWalk(elements) {
+  console.log('walking');
+  elements.forEach(walkChildren);
+  console.log('walked');
 }
 
 

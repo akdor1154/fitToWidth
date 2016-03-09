@@ -6,6 +6,59 @@ var styleSheet;
 var classRule;
 
 
+function AsyncForeacher(func, batchSize = 5) {
+    this.func = func;
+    this.queue = [];
+    this.batchSize = batchSize;
+    this.i = 0;
+    this.processCB = (queueDone) => this._processAsync(queueDone);
+    this.running = false;
+  }
+
+  AsyncForeacher.prototype = Object.create(Object.prototype);
+
+  AsyncForeacher.prototype.
+  add = function(element, run=true) {
+    this.queue.push(element);
+    if (run) {
+      window.setTimeout( () => this.process(), 5);
+    }
+  }
+
+  AsyncForeacher.prototype.
+  _processSync = function(callback) {
+    var batchLimit = Math.min(this.i+this.batchSize, this.queue.length);
+    for (; this.i < batchLimit; this.i++) {
+      this.func(this.queue[this.i]);
+      this.queue[this.i] = undefined;
+    }
+    var queueDone = (this.i == this.queue.length);
+    callback(queueDone);
+  }
+
+
+  AsyncForeacher.prototype.
+  process = function() {
+    if (this.running) {
+      return;
+    }
+    //console.log(`starting loop! i=${this.i}, l=${this.queue.length}, n=${this.queue[this.i].outerHTML}`);
+    this.running = true;
+    this._processAsync();
+  }
+
+  AsyncForeacher.prototype.
+  _processAsync = function(queueDone = false) {
+    if (queueDone) {
+      //console.log('ending loop!');
+      this.running = false;
+      return;
+    }
+    window.setTimeout( () => this._processSync(this.processCB) , 5);
+  }
+
+
+
 function setupStyle() {
   var styleElement = document.createElement('style');
   styleElement.title = 'fitToWidthStyle';
@@ -19,30 +72,51 @@ var getStyleSheet = Array.prototype.find.bind(
    (maybeStyle) => maybeStyle.title == 'fitToWidthStyle'
 );
 
-
-function setupClass(styleSheet) {
-  var classRuleIndex = styleSheet.insertRule(`.${resizeClassName} { max-width: auto }`, 0);
+function addStyleSheetRule(rule, styleSheet) {
+  var classRuleIndex = styleSheet.insertRule(rule, 0);
   var classRule = styleSheet.cssRules[classRuleIndex];
   return classRule;
 }
 
-
-function setWidth(widthInPx, classRule) {
-  var widthValue = (widthInPx) ?  `${widthInPx}px` : 'auto';
-  classRule.style.setProperty('max-width', widthValue, 'important');
-  //classRule.style.setProperty('background-color', 'red', 'important');
+function setupClass(styleSheet) {
+  maxWidthClassRule = addStyleSheetRule(`.${resizeClassName}:not(img) { max-width: auto }`, styleSheet);
+  addStyleSheetRule(`.akdorHasLongTextChild { max-width: auto }`, styleSheet);
+  minWidthClassRule = addStyleSheetRule(`* .akdorHasLongTextChild { max-width: auto }`, styleSheet);
 }
 
 
+function setMaxWidth(widthInPx) {
+  var widthValue = (widthInPx) ?  `${widthInPx}px` : 'auto';
+  maxWidthClassRule.style.setProperty('max-width', widthValue, 'important');
+  //classRule.style.setProperty('background-color', 'red', 'important');
+}
 
+function setMinWidth(widthInPx) {
+  var widthValue = (widthInPx) ?  `${widthInPx}px` : 'auto';
+  minWidthClassRule.style.setProperty('min-width', widthValue, 'important');
+}
+
+
+function isLongTextNode(node) {
+  return (node.nodeType == Node.TEXT_NODE
+    && node.nodeValue.length > 10
+    && node.nodeValue.trim().length > 10);
+}
 
 function isInline(node) {
+
   if (!node.nodeStyle) {
-    node.nodeStyle = window.getComputedStyle(node).display;
+    var computedStyle = window.getComputedStyle(node);
+    if (!computedStyle) {
+      return false;
+    }
+    node.nodeStyle = computedStyle.display;
   }
+
   if (!node.nodeStyle) {
     return false;
   }
+
   switch (node.nodeStyle) {
     case 'inline':
     case 'inline-block':
@@ -55,7 +129,11 @@ function isInline(node) {
 
 function hasWidth(node) {
   if (!node.nodeStyle) {
-    node.nodeStyle = window.getComputedStyle(node).display;
+    var computedStyle = window.getComputedStyle(node);
+    if (!computedStyle) {
+      return;
+    }
+    node.nodeStyle = computedStyle.display;
   }
   if (!node.nodeStyle) {
     return false;
@@ -85,21 +163,30 @@ function resize(node) {
 
 
 function onNewNode(node) {
-  if (!(node instanceof Element)) {
-    return;
-  }
-
   if (node.tested) {
     return;
   }
 
   node.tested = true;
 
+  if (isLongTextNode(node)) {
+    if (node.parentNode) {
+      node.parentNode.akdorHasLongTextChild = true;
+      node.parentNode.classList.add('akdorHasLongTextChild');
+      node.parentNode.classList.add(resizeClassName);
+    }
+  }
+
+  if (!(node instanceof Element)) {
+    return;
+  }
+
+
   if (isInline(node)) {
     //do nothing
   } else {
     //console.log('stopping a '+node.nodeName+' from resizing');
-    if (node.parentNode) {
+    if (node.parentNode && ! node.parentNode.akdorHasLongTextChild) {
       node.parentNode.classList.remove(resizeClassName);
     }
   }
@@ -112,7 +199,7 @@ function onNewNode(node) {
 
 
 function walkChildren(node) {
-  onNewNode(node);
+  elementQueue.add(node, false);
   if (!node.children) {
     return;
   }
@@ -124,13 +211,15 @@ function onMutation(mutations, observer) {
     for (let newNode of mutation.addedNodes) {
       try {
         if (!loaded) {
-          elements.push(newNode);
+          //console.error('mutation called before loaded!');
         } else {
           walkChildren(newNode);
+          elementQueue.process();
         }
       } catch (e) {
-        console.error(e.message);
-        console.error(e.stack);
+        //console.error('oh no!');
+        //console.error(e.message);
+        //console.error(e.stack);
       }
     }
   }
@@ -138,8 +227,9 @@ function onMutation(mutations, observer) {
 
 var loaded = false;
 var elements = Array(1000);
+var elementQueue = new AsyncForeacher(onNewNode);
 
-function main() {
+function setupObserver() {
 
   var observeOptions = {
     'childList': true,
@@ -147,11 +237,18 @@ function main() {
   };
 
   var observer = new MutationObserver(onMutation);
-  observer.observe(document.documentElement, observeOptions)
+  observer.observe(document.documentElement, observeOptions);
+
+}
+
+var minWidthClassRule;
+var maxWidthClassRule;
+
+function main() {
   
   setupStyle();
   var styleSheet = getStyleSheet();
-  var classRule = setupClass(styleSheet);
+  setupClass(styleSheet);
 
   document.addEventListener('DOMContentLoaded', onLoad, false);
   //walkChildren(document.body);
@@ -161,32 +258,38 @@ function main() {
 
   //window.addEventListener('resize', onResize.bind(undefined, classRule), false);
 
-  window.setInterval(checkIfResized.bind(undefined, classRule), 250);
+  window.setInterval(checkIfResized, 250);
   
 }
 
 function onLoad() {
+  document.removeEventListener('DOMContentLoaded', onLoad, false);
   loaded = true;
-  actuallyWalk(elements);
+  actuallyWalk();
 }
 
-function actuallyWalk(elements) {
-  console.log('walking');
-  elements.forEach(walkChildren);
-  console.log('walked');
+function actuallyWalk() {
+  //console.log('walking');
+  walkChildren(document.body);
+  elementQueue.process();
+  //console.log('walked');
+
+  //console.log(`observing ${window.location.href}`);
+  setupObserver();
+  //console.log('...for reals');
 }
 
 
 var oldWidth;
 var currentlyResizing;
 
-function checkIfResized(classRule) {
+function checkIfResized() {
   if (oldWidth != window.innerWidth) {
     oldWidth = window.innerWidth;
     currentlyResizing = true;
   } else {
     if (currentlyResizing) {
-      windowSizeChanged(classRule);
+      windowSizeChanged();
     }
     currentlyResizing = false;
   }
@@ -194,7 +297,7 @@ function checkIfResized(classRule) {
 
 var resizeTimout = 0;
 
-function onResize(classRule, e) {
+function onResize(e) {
   //console.error('event got');
   //console.log(`clearing timer ${window.resizeTimeout}`)
   clearTimeout(resizeTimout);
@@ -203,12 +306,13 @@ function onResize(classRule, e) {
 
 }
 
-function windowSizeChanged(classRule) {
+function windowSizeChanged() {
   var viewportWidth = window.innerWidth - 10;
   if (viewportWidth <= 5) {
     return;
   }
-  setWidth(viewportWidth, classRule);
+  //setMinWidth(viewportWidth, classRule);
+  setMaxWidth(viewportWidth);
 }
 
 main();

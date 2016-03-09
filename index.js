@@ -1,9 +1,14 @@
 var pageMod = require('sdk/page-mod');
 
-console.log('hello from index');
+exports.main = function() {
 
-pageMod.PageMod({
-	include: '*',
-	contentScriptFile: './fitToWidth.js',
-	contentScriptWhen: 'start'
-});
+	pageMod.PageMod({
+		include: '*',
+		contentScriptFile: './fitToWidth.js',
+		contentScriptWhen: 'start',
+		attachTo: 'top'
+	});
+
+}
+
+exports.onUnload = function() {}

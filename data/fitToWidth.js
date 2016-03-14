@@ -245,7 +245,6 @@ var minWidthClassRule;
 var maxWidthClassRule;
 
 function main() {
-  
   setupStyle();
   var styleSheet = getStyleSheet();
   setupClass(styleSheet);
@@ -265,7 +264,52 @@ function main() {
 function onLoad() {
   document.removeEventListener('DOMContentLoaded', onLoad, false);
   loaded = true;
-  actuallyWalk();
+  try {
+
+  if (!forSmallScreens()) {
+    //console.log('page looks like it\'s for desktop, resizing');
+    actuallyWalk();
+  }
+}
+
+
+function metaStringToObject(metaString) {
+  //"a=asdf; b= adf" => { a: 'asdf', b: 'asdf' }
+
+  var contentData = {};
+  metaString.split(',').forEach((contentDatum) => {
+    var contentDatumSplit = contentDatum.split('=');
+    if (contentDatumSplit.length != 2) {
+      return;
+    }
+    contentData[contentDatumSplit[0].trim()] = contentDatumSplit[1].trim();
+  });
+
+  return contentData;
+}
+
+
+function forSmallScreens() {
+  var viewportElement = document.querySelector('meta[name=viewport]');
+  if (!viewportElement || !viewportElement.content) {
+    return false;
+  }
+
+  var contentData = metaStringToObject(viewportElement.content);
+
+  if (contentData.width == 'device-width') {
+    return true;
+  }
+
+  if (parseInt(contentData.width) <= 480) {
+    return true;
+  }
+
+  if (contentData['initial-scale']) {
+    return true;
+  }
+
+  return false;
 }
 
 function actuallyWalk() {

@@ -110,13 +110,13 @@ function isInline(node) {
   if (!node.nodeStyle) {
     var computedStyle = window.getComputedStyle(node);
     if (!computedStyle) {
-      return false;
+      return true;
     }
     node.nodeStyle = computedStyle.display;
   }
 
   if (!node.nodeStyle) {
-    return false;
+    return true;
   }
 
   switch (node.nodeStyle) {

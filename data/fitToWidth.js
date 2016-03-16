@@ -121,7 +121,7 @@ function isInline(node) {
 
   switch (node.nodeStyle) {
     case 'inline':
-    case 'inline-block':
+    //case 'inline-block':
       return true;
     default:
       return false;

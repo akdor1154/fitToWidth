@@ -229,7 +229,7 @@ function onMutation(mutations, observer) {
 
 var loaded = false;
 var elements = Array(1000);
-var elementQueue = new AsyncForeacher(onNewNode);
+var elementQueue = new AsyncForeacher(onNewNode, 40);
 
 function setupObserver() {
 

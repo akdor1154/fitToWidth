@@ -1,6 +1,8 @@
 'use strict';
 
 var resizeClassName = 'akdorFitToWidth';
+var hasLongTextChildClassName = 'akdorHasLongTextChild';
+var styleSheetName = 'fitToWidthStyle';
 
 var styleSheet;
 var classRule;
@@ -61,7 +63,7 @@ function AsyncForeacher(func, batchSize = 5) {
 
 function setupStyle() {
   var styleElement = document.createElement('style');
-  styleElement.title = 'fitToWidthStyle';
+  styleElement.title = styleSheetName;
   document.head.appendChild(styleElement);
   return styleElement;  
 }
@@ -69,7 +71,7 @@ function setupStyle() {
 
 var getStyleSheet = Array.prototype.find.bind(
    document.styleSheets,
-   (maybeStyle) => maybeStyle.title == 'fitToWidthStyle'
+   (maybeStyle) => maybeStyle.title == styleSheetName
 );
 
 function addStyleSheetRule(rule, styleSheet) {
@@ -80,8 +82,8 @@ function addStyleSheetRule(rule, styleSheet) {
 
 function setupClass(styleSheet) {
   maxWidthClassRule = addStyleSheetRule(`.${resizeClassName}:not(img) { max-width: auto }`, styleSheet);
-  addStyleSheetRule(`.akdorHasLongTextChild { max-width: auto }`, styleSheet);
-  minWidthClassRule = addStyleSheetRule(`* .akdorHasLongTextChild { max-width: auto }`, styleSheet);
+  addStyleSheetRule(`.${hasLongTextChildClassName} { max-width: auto }`, styleSheet);
+  addStyleSheetRule(`* .${hasLongTextChildClassName} { max-width: auto }`, styleSheet);
 }
 
 
@@ -172,7 +174,7 @@ function onNewNode(node) {
   if (isLongTextNode(node)) {
     if (node.parentNode) {
       node.parentNode.akdorHasLongTextChild = true;
-      node.parentNode.classList.add('akdorHasLongTextChild');
+      node.parentNode.classList.add(hasLongTextChildClassName);
       node.parentNode.classList.add(resizeClassName);
     }
   }

@@ -172,7 +172,7 @@ function onNewNode(node) {
   node.tested = true;
 
   if (isLongTextNode(node)) {
-    if (node.parentNode) {
+    if (node.parentNode && !node.parentNode.akdorHasLongTextChild) {
       node.parentNode.akdorHasLongTextChild = true;
       node.parentNode.classList.add(hasLongTextChildClassName);
       node.parentNode.classList.add(resizeClassName);
@@ -205,7 +205,7 @@ function walkChildren(node) {
   if (!node.children) {
     return;
   }
-  Array.prototype.forEach.call(node.children, walkChildren);
+  Array.prototype.forEach.call(node.childNodes, walkChildren);
 }
 
 function onMutation(mutations, observer) {

@@ -264,7 +264,6 @@ function main() {
 function onLoad() {
   document.removeEventListener('DOMContentLoaded', onLoad, false);
   loaded = true;
-  try {
 
   if (!forSmallScreens()) {
     //console.log('page looks like it\'s for desktop, resizing');

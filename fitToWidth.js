@@ -69,7 +69,7 @@ function setupStyle() {
 }
 
 
-var getStyleSheet = Array.prototype.find.bind(
+var getStyleSheet = () => Array.prototype.find.call(
    document.styleSheets,
    (maybeStyle) => maybeStyle.title == styleSheetName
 );
@@ -335,7 +335,7 @@ function checkIfResized() {
     currentlyResizing = true;
   } else {
     if (currentlyResizing) {
-      windowSizeChanged();
+      windowSizeChanged(oldWidth);
     }
     currentlyResizing = false;
   }
@@ -352,18 +352,110 @@ function onResize(e) {
 
 }
 
-function windowSizeChanged() {
+function windowSizeChanged(oldWidth) {
   var viewportWidth = window.innerWidth - 10;
   if (viewportWidth <= 5) {
     return;
   }
   //setMinWidth(viewportWidth, classRule);
 
-  var elementToScrollTo = document.elementFromPoint(20, 100);
+  var elementToScrollTo = guessFocusedElement(Math.min(oldWidth, window.innerWidth));
 
   setMaxWidth(viewportWidth);
 
-  elementToScrollTo.scrollIntoView();
+  window.requestAnimationFrame(() => {
+    if (elementToScrollTo && !isElementVisible(elementToScrollTo)) {
+      console.log('we need to scroll');
+      elementToScrollTo.scrollIntoView();
+    } else {
+      console.log('no need to scroll');
+    }
+  });
 }
 
-main();
+
+function* coordinates({minX, maxX, numX, minY, maxY, numY}) {
+  for (let yi = 0; yi < numY; yi++) {
+    for (let xi = 0; xi < numX; xi++) {
+      yield [
+        minX + (xi * (maxX - minX) / (numX-1)),
+        minY + (yi * (maxY - minY) / (numY-1)),
+      ];
+    }
+  }
+}
+
+function focusedElementCoordinates(width, height) {
+  const numX = 6;
+  const numY = 4;
+
+  const minY = 0.2 * height;
+  const maxY = 0.6 * height;
+
+  const minX = 0.1 * width;
+  const maxX = 0.9 * width;
+
+  return coordinates({minX, maxX, numX, minY, maxY, numY});
+}
+
+function zoomOutElementCoordinates() {
+
+}
+
+function* maybeFocusedElements(width, height) {
+  const html = document.querySelector('html');
+  for (let coord of focusedElementCoordinates(width, height)) {
+    const element = document.elementFromPoint(...coord);
+    if (element !== document.body && element !== html) {
+      yield element;
+    } 
+  }
+}
+
+
+function getMostCommon(iterator) {
+  const counts = new Map();
+  for (const item of iterator) {
+    if (! counts.has(item) ) {
+      counts.set(item, 1);
+    } else {
+      counts.set(item, counts.get(item)+1);
+    }
+  }
+  console.log(counts);
+  let maxCount = 0;
+  let maxElement = undefined;
+  for (const [element, count] of counts) {
+    if (count > maxCount) {
+      maxCount = count;
+      maxElement = element;
+    }
+  }
+  return maxElement;
+}
+
+function guessFocusedElement(width) {
+  return getMostCommon(maybeFocusedElements(width, window.innerHeight));
+}
+
+
+function isElementVisible(el) {
+  
+      var rect = el.getBoundingClientRect();
+  
+      const middleX = rect.left + rect.width / 2;
+      const middleY = rect.top + rect.height / 2;
+
+      console.dir({
+        middleX,
+        middleY,
+        height: window.innerHeight,
+        width: window.innerWidth
+      })
+      return (
+          middleX >= 0 &&
+          middleY >= 0 &&
+          middleY <= (window.innerHeight) && 
+          middleX <= (window.innerWidth)
+      );
+  }

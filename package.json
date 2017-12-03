@@ -1,0 +1,21 @@
+{
+  "name": "fittowidth",
+  "version": "1.0.0",
+  "description": "Fits text on most web pages to the width of your phone.",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akdor1154/fitToWidth.git"
+  },
+  "author": "Jarrad Whitaker",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/akdor1154/fitToWidth/issues"
+  },
+  "homepage": "https://github.com/akdor1154/fitToWidth#readme",
+  "devDependencies": {
+    "mocha": "^4.0.1"
+  }
+}

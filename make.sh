@@ -6,4 +6,4 @@ ZIPNAME=${ID}-${VERSION}.xpi
 
 echo "${ZIPNAME}"
 
-zip "${ZIPNAME}" fitToWidth.js manifest.json
+zip "${ZIPNAME}" fitToWidth.js run.js manifest.json

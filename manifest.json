@@ -3,7 +3,7 @@
   "name": "Fit To Width",
   "applications": {
     "gecko": {
-      "id": "fittiwidth@jarrad"
+      "id": "fittowidth@jarrad"
     }
   },
   "version": "0.5.0",

@@ -358,7 +358,12 @@ function windowSizeChanged() {
     return;
   }
   //setMinWidth(viewportWidth, classRule);
+
+  var elementToScrollTo = document.elementFromPoint(20, 100);
+
   setMaxWidth(viewportWidth);
+
+  elementToScrollTo.scrollIntoView();
 }
 
 main();

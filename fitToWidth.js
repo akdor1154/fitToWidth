@@ -247,6 +247,7 @@ var minWidthClassRule;
 var maxWidthClassRule;
 
 function main() {
+  console.log('running main')
   setupStyle();
   var styleSheet = getStyleSheet();
   setupClass(styleSheet);
@@ -268,7 +269,7 @@ function onLoad() {
   loaded = true;
 
   if (!forSmallScreens()) {
-    //console.log('page looks like it\'s for desktop, resizing');
+    console.log('page looks like it\'s for desktop, resizing');
     actuallyWalk();
   }
 }

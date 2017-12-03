@@ -1,0 +1,2 @@
+default:
+	./make.sh

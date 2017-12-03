@@ -247,31 +247,31 @@ var minWidthClassRule;
 var maxWidthClassRule;
 
 function main() {
-  console.log('running main')
-  setupStyle();
-  var styleSheet = getStyleSheet();
-  setupClass(styleSheet);
-
   document.addEventListener('DOMContentLoaded', onLoad, false);
-  //walkChildren(document.body);
-  //for each node
-
-  //windowSizeChanged(classRule);
-
-  //window.addEventListener('resize', onResize.bind(undefined, classRule), false);
-
-  window.setInterval(checkIfResized, 250);
-  
 }
 
 function onLoad() {
+  //console.log('running onLoad');
   document.removeEventListener('DOMContentLoaded', onLoad, false);
   loaded = true;
 
   if (!forSmallScreens()) {
-    console.log('page looks like it\'s for desktop, resizing');
+
+    setup();
+    //console.log('page looks like it\'s for desktop, resizing');
     actuallyWalk();
+
+  } else {
+    //console.log('page looks like it\'s for mobile, leaving alone');
   }
+}
+
+function setup() {
+  setupStyle();
+  var styleSheet = getStyleSheet();
+  setupClass(styleSheet);
+
+  window.setInterval(checkIfResized, 250);
 }
 
 

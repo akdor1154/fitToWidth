@@ -1,8 +1,11 @@
 # Fit To Width
 Fits text on most web pages to the width of your phone.
 
-Install from Firefox Addons:
+For Firefox Desktop, install from AMO:
 https://addons.mozilla.org/en-US/firefox/addon/fit-text-to-width/
+
+For Firefox Mobile, install from AMO:
+https://addons.mozilla.org/en-US/android/addon/fit-text-to-width/
 
 ## Mechanism
 This add-on is quite simple in implementation - it finds a bunch of
